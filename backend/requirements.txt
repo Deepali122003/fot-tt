@@ -3,6 +3,6 @@ flask-cors
 pymongo
 python-dotenv
 flask-socketio
-gunincorn
+gunicorn
 dnspython
 requests
