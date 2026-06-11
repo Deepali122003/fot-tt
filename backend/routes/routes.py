@@ -4,7 +4,7 @@ from bson.objectid import ObjectId
 import requests as http_requests
 
 # ── Your deployed Apps Script URL ──
-APPS_SCRIPT_URL = "https://script.google.com/a/macros/ce.du.ac.in/s/AKfycbxkslo9MmgLhF2UVPi5lgrUhF-l_XcO5ahwPVeX-Tmxphy-z2_YsiYbGotJjV_25laj/exec"
+APPS_SCRIPT_URL = "https://script.google.com/a/macros/fot.du.ac.in/s/AKfycbwT0VfiDFGKC0l1Bb-dnuiktgT-f2QIcQ3Lhx7s2HjoiWt47hqvTsYo8ZkwKD_A6Zpt/exec"
 
 
 
