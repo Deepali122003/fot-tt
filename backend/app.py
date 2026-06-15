@@ -7,7 +7,7 @@ import os
 app = Flask(__name__)
 CORS(app, origins=[
     "http://localhost:5173",
-    "https://fot-timetable-version-v1.vercel.app"
+    "https://fot-tt.vercel.app"
 ])
 
 # MongoDB Configuration
