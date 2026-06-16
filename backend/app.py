@@ -15,7 +15,7 @@ CORS(app, origins=[
 
 # MongoDB Configuration
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
-DB_NAME = "timetable_db"
+DB_NAME = "fot-tt"
 
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
