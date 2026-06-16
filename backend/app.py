@@ -5,22 +5,22 @@ from routes.routes import construct_routes
 import os
 
 app = Flask(__name__)
-CORS(app, origins=[
-    "http://localhost:5173",
-    "https://fot-tt.vercel.app"
-],
+CORS(app, 
+    origins=[
+        "http://localhost:5173",
+        "https://fot-tt.vercel.app"
+    ],
     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"]
 )
 
 # MongoDB Configuration
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
-DB_NAME = "fot-tt"
+DB_NAME = os.getenv("DB_NAME", "fot-tt")
 
-client = MongoClient(MONGO_URI)
+client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
 db = client[DB_NAME]
 
-# 🔥 ADD THIS ROUTE
 @app.route("/")
 def home():
     return {
@@ -34,7 +34,6 @@ def home():
         ]
     }
 
-# Register API routes
 app.register_blueprint(construct_routes(db), url_prefix='/api')
 
 if __name__ == '__main__':
