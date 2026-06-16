@@ -76,6 +76,20 @@ def construct_routes(db):
     def labs():
         return timetable_controller.handle_labs(db, request)
 
+    @api.route('/batches/<batch_id>', methods=['DELETE'])
+    def delete_batch(batch_id):
+        db.batches.delete_one({"_id": ObjectId(batch_id)})
+        return jsonify({"message": "Deleted"}), 200
+
+    @api.route('/faculties/<faculty_id>', methods=['DELETE'])
+    def delete_faculty(faculty_id):
+        db.faculties.delete_one({"_id": ObjectId(faculty_id)})
+        return jsonify({"message": "Deleted"}), 200
+
+    @api.route('/rooms/<room_id>', methods=['DELETE'])
+    def delete_room(room_id):
+        db.rooms.delete_one({"_id": ObjectId(room_id)})
+        return jsonify({"message": "Deleted"}), 200
     # ────────────────────────────────────────
     # SLOTS — GET ALL / POST NEW
     # ────────────────────────────────────────
