@@ -8,7 +8,10 @@ app = Flask(__name__)
 CORS(app, origins=[
     "http://localhost:5173",
     "https://fot-tt.vercel.app"
-])
+],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"]
+)
 
 # MongoDB Configuration
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
