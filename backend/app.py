@@ -18,7 +18,11 @@ CORS(app,
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
 DB_NAME = os.getenv("DB_NAME", "fot-tt")
 
-client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+client = MongoClient(
+    MONGO_URI,
+    serverSelectionTimeoutMS=5000,
+    tlsAllowInvalidCertificates=True
+)
 db = client[DB_NAME]
 
 @app.route("/")
