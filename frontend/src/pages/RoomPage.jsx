@@ -29,8 +29,12 @@ export default function RoomPage() {
 
   // Extract unique rooms/labs
   const rooms = [
-    ...new Set(slots.map((s) => s.room_number || s.room_id || s.lab_id))
-  ];
+  ...new Set(
+    slots
+      .map((s) => s.room_number || s.room_id || s.lab_id)
+      .filter(Boolean)
+  )
+];
 
   return (
     <div style={{ padding: 24, fontFamily: "'DM Sans', sans-serif" }}>
