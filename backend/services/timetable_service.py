@@ -63,9 +63,14 @@ class TimetableService:
     # ← No sync here — routes.py handles it
     # -------------------------
     def process_new_slot(self, data):
-        batch = self.db.batches.find_one({"name": data.get("batch")})
-        faculty = self.db.faculties.find_one({"name": data.get("faculty")})
+        # batch = self.db.batches.find_one({"name": data.get("batch")})
+        # faculty = self.db.faculties.find_one({"name": data.get("faculty")})
 
+        batch_name = (data.get("batch") or "").strip()
+        faculty_name = (data.get("faculty") or "").strip()
+
+        batch = self.db.batches.find_one({"name": {"$regex": f"^{batch_name}$", "$options": "i"}})
+        faculty = self.db.faculties.find_one({"name": {"$regex": f"^{faculty_name}$", "$options": "i"}})
         if not batch:
             return {"error": "Batch not found"}, 404
         if not faculty:
