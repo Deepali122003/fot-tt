@@ -17,9 +17,6 @@ class TimetableService:
         self.subject_model = SubjectModel(db)
         self.lab_model = LabModel(db)
 
-    # -------------------------
-    # BATCH
-    # -------------------------
     def create_batch(self, data):
         if isinstance(data, list):
             data = data[0] if data else {}
@@ -31,9 +28,6 @@ class TimetableService:
     def get_batches(self):
         return self.batch_model.get_all_batches()
 
-    # -------------------------
-    # FACULTY
-    # -------------------------
     def create_faculty(self, data):
         result = self.faculty_model.create_faculty(data)
         return {"id": str(result.inserted_id)}, 201
@@ -41,9 +35,6 @@ class TimetableService:
     def get_faculties(self):
         return self.faculty_model.get_all_faculties()
 
-    # -------------------------
-    # ROOM
-    # -------------------------
     def create_room(self, data):
         result = self.room_model.add_room(
             data.get("room_number"),
@@ -58,21 +49,22 @@ class TimetableService:
     def get_labs(self):
         return self.lab_model.get_all_labs()
 
-    # -------------------------
-    # CREATE SLOT
-    # ← No sync here — routes.py handles it
-    # -------------------------
     def process_new_slot(self, data):
-        # batch = self.db.batches.find_one({"name": data.get("batch")})
-        # faculty = self.db.faculties.find_one({"name": data.get("faculty")})
-
         batch_name = (data.get("batch") or "").strip()
         faculty_name = (data.get("faculty") or "").strip()
+        year = data.get("year")
 
-        batch = self.db.batches.find_one({"name": {"$regex": f"^{batch_name}$", "$options": "i"}})
-        faculty = self.db.faculties.find_one({"name": {"$regex": f"^{faculty_name}$", "$options": "i"}})
+        batch_query = {"name": {"$regex": f"^{batch_name}$", "$options": "i"}}
+        if year:
+            batch_query["year"] = str(year)
+
+        batch = self.db.batches.find_one(batch_query)
         if not batch:
             return {"error": "Batch not found"}, 404
+
+        faculty = self.db.faculties.find_one(
+            {"name": {"$regex": f"^{faculty_name}$", "$options": "i"}}
+        )
         if not faculty:
             return {"error": "Faculty not found"}, 404
 
@@ -80,60 +72,43 @@ class TimetableService:
         room = self.db.rooms.find_one({"room_number": room_input})
 
         slot_data = {
-            "subject":     data.get("subject"),
-            "subBatch":    data.get("subBatch"),
-            "faculty":     faculty["name"],
-            "faculty_id":  str(faculty["_id"]),
-            "room_id":     str(room["_id"]) if room else None,
-            "room_number": room_input if room_input else None,
-            "batch":       batch["name"],
-            "batch_id":    str(batch["_id"]),
-            "day":         data.get("day"),
-            "time":        data.get("time"),
+            "subject":          data.get("subject"),
+            "subBatch":         data.get("subBatch"),
+            "faculty":          faculty["name"],
+            "faculty_id":       str(faculty["_id"]),
+            "faculty_acronym":  faculty.get("acronym", ""),
+            "room_id":          str(room["_id"]) if room else None,
+            "room_number":      room_input if room_input else None,
+            "batch":            batch["name"],
+            "batch_id":         str(batch["_id"]),
+            "year":             batch.get("year", ""),
+            "day":              data.get("day"),
+            "time":             data.get("time"),
         }
 
         result = self.slot_model.create_slot(slot_data)
-
         if isinstance(result, dict) and "error" in result:
             return result, 409
 
-        # ✅ Return slot_data too so routes.py can sync it
         return {"message": "Slot added", "id": str(result.inserted_id), "slot": slot_data}, 201
 
-    # -------------------------
-    # DELETE SLOT
-    # ← No sync here — routes.py handles it
-    # -------------------------
     def delete_slot(self, slot_id):
         slot = self.db.slots.find_one({"_id": ObjectId(slot_id)})
         if not slot:
             return {"error": "Slot not found"}, 404
-
         result = self.slot_model.delete_slot(slot_id)
         if result.deleted_count == 0:
             return {"error": "Slot not found"}, 404
-
         return {"message": "Slot deleted successfully"}, 200
 
-    # -------------------------
-    # UPDATE SLOT
-    # ← No sync here — routes.py handles it
-    # -------------------------
     def update_slot(self, slot_id, data):
         old_slot = self.db.slots.find_one({"_id": ObjectId(slot_id)})
-
         result = self.slot_model.update_slot(slot_id, data)
         if isinstance(result, dict) and result.get("error"):
             return result, 409
-
         new_slot = self.db.slots.find_one({"_id": ObjectId(slot_id)})
-
-        # ✅ Return both old and new so routes.py can sync delete+create
         return {"message": "Slot updated", "old_slot": old_slot, "new_slot": new_slot}, 200
 
-    # -------------------------
-    # FETCH SCHEDULE
-    # -------------------------
     def get_schedule_by_batch(self, batch_name):
         slots = self.slot_model.get_slots_by_batch(batch_name)
         for slot in slots:
@@ -146,8 +121,5 @@ class TimetableService:
                 slot["room_id"] = str(slot["room_id"])
         return slots
 
-    # -------------------------
-    # SEARCH SUBJECT
-    # -------------------------
     def search_subjects(self, query):
         return self.subject_model.search_subjects(query)
