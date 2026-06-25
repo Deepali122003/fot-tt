@@ -143,13 +143,33 @@ export default function MasterPage() {
 
       {/* Timetable Grid */}
       {!loading && selectedBatch && (
-        <TimetableGrid
-          batch={selectedBatch}
-          year={selectedYear}
-          slots={slots}
-          refresh={() => fetchSlots(selectedBatch, selectedYear)}
-        />
-      )}
+        <>
+          {/* Timetable Header */}
+          <div style={{
+          display: "flex", alignItems: "center", gap: 12, marginBottom: 16,
+          padding: "14px 20px", background: "#1e293b", borderRadius: 14,
+          }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>
+          {selectedBatch}
+          </div>
+          {selectedYear && (
+            <span style={{ fontSize: 11, fontWeight: 600, background: "#fbbf24", color: "#0f172a", padding: "3px 10px", borderRadius: 20 }}>
+            Year {selectedYear}
+          </span>
+          )}
+          <span style={{ fontSize: 11, color: "#94a3b8", marginLeft: "auto", fontFamily: "'DM Mono', monospace" }}>
+          {slots.length} slot{slots.length !== 1 ? "s" : ""} assigned
+          </span>
+         </div>
+
+      <TimetableGrid
+        batch={selectedBatch}
+        year={selectedYear}
+        slots={slots}
+        refresh={() => fetchSlots(selectedBatch, selectedYear)}
+      />
+    </>
+    )}
 
       {/* Faculty Acronym Table */}
       {!loading && facultiesInBatch.length > 0 && (

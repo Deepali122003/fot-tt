@@ -22,15 +22,18 @@ def build_sheet_data(slot, db=None):
         except Exception:
             pass
 
-    return {
-        "batch":       slot.get("batch", ""),
-        "subject":     slot.get("subject", ""),
-        "subBatch":    slot.get("subBatch") or "-",
-        "faculty":     slot.get("faculty", ""),
-        "room_number": room_number if room_number else "-",
-        "day":         slot.get("day", ""),
-        "time":        slot.get("time", ""),
-    }
+    return  {
+    "batch":           slot.get("batch", ""),
+    "year":            slot.get("year", ""),
+    "subject":         slot.get("subject", ""),
+    "subBatch":        slot.get("subBatch") or "-",
+    "faculty":         slot.get("faculty", ""),
+    "faculty_acronym": slot.get("faculty_acronym", ""),
+    "department":      slot.get("department", ""),
+    "room_number":     room_number if room_number else "-",
+    "day":             slot.get("day", ""),
+    "time":            slot.get("time", ""),
+}
 
 
 # ════════════════════════════════════════════
