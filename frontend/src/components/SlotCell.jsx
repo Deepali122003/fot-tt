@@ -30,20 +30,38 @@ export default function SlotCell({ day, time, batch, year, slots = [], refresh }
         const style = subBatchStyles[key];
         return (
           <div key={slot._id} style={{ ...style.card, borderRadius: 8, padding: "5px 7px", boxShadow: "0 1px 2px rgba(0,0,0,.04)", fontFamily: "'DM Sans', sans-serif" }}>
+
+            {/* Subject Acronym as main label */}
             <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
               <span style={{ ...style.dot, width: 6, height: 6, borderRadius: "50%", flexShrink: 0 }} />
-              <span style={{ fontSize: 10, fontWeight: 700, color: "#1e293b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{slot.subject}</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: "#1e293b", fontFamily: "'DM Mono', monospace" }}>
+                {slot.subject_acronym || slot.subject}
+              </span>
             </div>
+
+            {/* Meta */}
             <div style={{ paddingLeft: 11, display: "flex", flexDirection: "column", gap: 1 }}>
+              {/* Full subject name in small text */}
+              <span style={{ fontSize: 8, color: "#94a3b8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {slot.subject}
+              </span>
+              {/* Section + SubBatch */}
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <span style={{ fontSize: 9, color: "#475569", fontWeight: 600 }}>{slot.batch}</span>
-                {slot.subBatch && <span style={{ ...style.badge, fontSize: 8, fontWeight: 600, padding: "1px 5px", borderRadius: 20 }}>{slot.subBatch}</span>}
+                {slot.subBatch && (
+                  <span style={{ ...style.badge, fontSize: 8, fontWeight: 600, padding: "1px 5px", borderRadius: 20 }}>{slot.subBatch}</span>
+                )}
               </div>
+              {/* Faculty acronym */}
               <span style={{ fontSize: 9, color: "#475569" }}>
                 {slot.faculty_acronym ? `[${slot.faculty_acronym}]` : slot.faculty}
               </span>
-              <span style={{ fontSize: 9, color: "#94a3b8", fontFamily: "'DM Mono', monospace" }}>{slot.room_number || "—"}</span>
+              {/* Room */}
+              <span style={{ fontSize: 9, color: "#94a3b8", fontFamily: "'DM Mono', monospace" }}>
+                {slot.room_number || "—"}
+              </span>
             </div>
+
             <button onClick={(e) => { e.stopPropagation(); handleDelete(slot._id); }}
               style={{ marginTop: 4, fontSize: 9, padding: "3px 6px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", width: "100%" }}>
               Remove

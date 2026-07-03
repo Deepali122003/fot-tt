@@ -73,6 +73,7 @@ class TimetableService:
 
         slot_data = {
             "subject":          data.get("subject"),
+            "subject_acronym":  (data.get("subject_acronym") or "").strip().upper(),
             "subBatch":         data.get("subBatch"),
             "faculty":          faculty["name"],
             "faculty_id":       str(faculty["_id"]),

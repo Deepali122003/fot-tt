@@ -4,23 +4,22 @@ import FacultyPage from "./pages/FacultyPage";
 import RoomPage from "./pages/RoomPage";
 import BatchPage from "./pages/BatchPage";
 import AdminPage from "./pages/AdminPage";
+import SubjectPage from "./pages/SubjectPage";
 
 function NavBar() {
   const location = useLocation();
 
   const navItems = [
-    { path: "/",        label: "Master",  icon: "⊞" },
-    { path: "/faculty", label: "Faculty", icon: "◈" },
-    { path: "/room",    label: "Room",    icon: "⬜" },
-    { path: "/batches", label: "Batches", icon: "🎓" },
-    { path: "/admin",   label: "Admin",   icon: "⚙" },
+    { path: "/",         label: "Master",   icon: "⊞" },
+    { path: "/faculty",  label: "Faculty",  icon: "◈" },
+    { path: "/room",     label: "Room",     icon: "⬜" },
+    { path: "/batches",  label: "Batches",  icon: "🎓" },
+    { path: "/subjects", label: "Subjects", icon: "📚" },
+    { path: "/admin",    label: "Admin",    icon: "⚙" },
   ];
 
   return (
-    <nav style={{
-      display: "flex", gap: "4px", background: "#f1f5f9",
-      padding: "4px", borderRadius: "14px", flexWrap: "wrap",
-    }}>
+    <nav style={{ display: "flex", gap: "4px", background: "#f1f5f9", padding: "4px", borderRadius: "14px", flexWrap: "wrap" }}>
       {navItems.map((item) => {
         const active = location.pathname === item.path;
         return (
@@ -50,7 +49,6 @@ export default function App() {
       <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
       <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "'DM Sans', sans-serif" }}>
-
         <header style={{ background: "#ffffff", borderBottom: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,.06)", position: "sticky", top: 0, zIndex: 40 }}>
           <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -67,15 +65,15 @@ export default function App() {
         <main style={{ maxWidth: "1280px", margin: "24px auto", padding: "0 16px" }}>
           <div style={{ background: "#ffffff", borderRadius: 20, border: "1px solid #e2e8f0", boxShadow: "0 1px 6px rgba(0,0,0,.05)", overflowX: "auto" }}>
             <Routes>
-              <Route path="/"        element={<MasterPage />} />
-              <Route path="/faculty" element={<FacultyPage />} />
-              <Route path="/room"    element={<RoomPage />} />
-              <Route path="/batches" element={<BatchPage />} />
-              <Route path="/admin"   element={<AdminPage />} />
+              <Route path="/"         element={<MasterPage />} />
+              <Route path="/faculty"  element={<FacultyPage />} />
+              <Route path="/room"     element={<RoomPage />} />
+              <Route path="/batches"  element={<BatchPage />} />
+              <Route path="/subjects" element={<SubjectPage />} />
+              <Route path="/admin"    element={<AdminPage />} />
             </Routes>
           </div>
         </main>
-
       </div>
     </BrowserRouter>
   );

@@ -26,6 +26,7 @@ def build_sheet_data(slot, db=None):
     "batch":           slot.get("batch", ""),
     "year":            slot.get("year", ""),
     "subject":         slot.get("subject", ""),
+    "subject_acronym":  slot.get("subject_acronym", ""),
     "subBatch":        slot.get("subBatch") or "-",
     "faculty":         slot.get("faculty", ""),
     "faculty_acronym": slot.get("faculty_acronym", ""),

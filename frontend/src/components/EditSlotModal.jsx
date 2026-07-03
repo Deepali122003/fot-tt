@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 
 export default function EditSlotModal({ day, time, batch, year, slots = [], onClose, refresh }) {
-  const [form, setForm] = useState({ subject: "", faculty: "", room: "", subBatch: "" });
+  const [form, setForm] = useState({ subject: "", subject_acronym: "", faculty: "", room: "", subBatch: "" });
   const [loading, setLoading] = useState(false);
   const [faculties, setFaculties] = useState([]);
   const [rooms, setRooms] = useState([]);
@@ -20,13 +20,24 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
 
   const handleAdd = async () => {
     if (!form.subject.trim() || !form.faculty.trim()) return alert("Subject and Faculty are required");
-    const newSlot = { subject: form.subject.trim(), faculty: form.faculty.trim(), room_id: form.room?.trim() || null, subBatch: form.subBatch?.trim() || null, day, time, batch, year };
+    if (!form.subject_acronym.trim()) return alert("Subject Acronym is required");
+    const newSlot = {
+      subject: form.subject.trim(),
+      subject_acronym: form.subject_acronym.trim().toUpperCase(),
+      faculty: form.faculty.trim(),
+      room_id: form.room?.trim() || null,
+      subBatch: form.subBatch?.trim() || null,
+      day, time, batch, year,
+    };
     try {
       setLoading(true);
-      const res = await fetch(`${BASE_URL}/api/slots`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newSlot) });
+      const res = await fetch(`${BASE_URL}/api/slots`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newSlot),
+      });
       const data = await res.json();
       if (!res.ok) { alert(data.error || "Failed to add slot"); return; }
-      setForm({ subject: "", faculty: "", room: "", subBatch: "" });
+      setForm({ subject: "", subject_acronym: "", faculty: "", room: "", subBatch: "" });
       refresh(); onClose();
     } catch { alert("Server error"); } finally { setLoading(false); }
   };
@@ -49,8 +60,9 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <style>{`@keyframes esSlideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}.es-box{animation:esSlideUp .2s ease}`}</style>
 
-      <div className="es-box" style={{ background: "#fff", width: 460, maxWidth: "calc(100vw - 32px)", borderRadius: 20, boxShadow: "0 20px 60px rgba(0,0,0,.3)", overflow: "hidden" }}>
+      <div className="es-box" style={{ background: "#fff", width: 480, maxWidth: "calc(100vw - 32px)", borderRadius: 20, boxShadow: "0 20px 60px rgba(0,0,0,.3)", overflow: "hidden" }}>
 
+        {/* Header */}
         <div style={{ background: "#1e293b", padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
             <div style={{ fontSize: 10, color: "#94a3b8", fontFamily: "'DM Mono',monospace", textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 4 }}>Edit Slot</div>
@@ -63,13 +75,19 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
           <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", color: "#94a3b8", cursor: "pointer", fontSize: 22 }}>×</button>
         </div>
 
+        {/* Body */}
         <div style={{ padding: 24 }}>
+
+          {/* Existing entries */}
           <div style={{ fontSize: 10, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 10, fontFamily: "'DM Mono',monospace" }}>Existing Entries</div>
           <div style={{ maxHeight: 160, overflowY: "auto", marginBottom: 2 }}>
             {slots.length === 0 ? <p style={{ fontSize: 12, color: "#94a3b8" }}>No slots assigned yet.</p> : slots.map((s) => (
               <div key={s._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "8px 12px", marginBottom: 6 }}>
                 <span style={{ fontSize: 11, color: "#334155" }}>
-                  <strong>{s.subject}</strong> {s.batch}{s.subBatch ? ` ${s.subBatch}` : ""}{s.faculty_acronym ? ` [${s.faculty_acronym}]` : ` · ${s.faculty}`}{s.room_number ? ` (${s.room_number})` : ""}
+                  <strong>{s.subject_acronym || s.subject}</strong>
+                  {" "}{s.batch}{s.subBatch ? ` ${s.subBatch}` : ""}
+                  {s.faculty_acronym ? ` [${s.faculty_acronym}]` : ` · ${s.faculty}`}
+                  {s.room_number ? ` (${s.room_number})` : ""}
                 </span>
                 <button onClick={() => handleDelete(s._id)} style={{ fontSize: 11, fontWeight: 600, color: "#f43f5e", background: "transparent", border: "none", cursor: "pointer", padding: "3px 8px", borderRadius: 8 }}>Remove</button>
               </div>
@@ -80,10 +98,20 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
           <div style={{ fontSize: 10, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 10, fontFamily: "'DM Mono',monospace" }}>Add New Entry</div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div style={{ gridColumn: "span 2" }}>
-              <label style={lbl}>Subject</label>
+
+            {/* Subject Name */}
+            <div>
+              <label style={lbl}>Subject Name</label>
               <input style={inp} placeholder="e.g. Data Structures" value={form.subject} onChange={(e) => handleChange("subject", e.target.value)} />
             </div>
+
+            {/* Subject Acronym */}
+            <div>
+              <label style={lbl}>Subject Acronym *</label>
+              <input style={inp} placeholder="e.g. DS" value={form.subject_acronym} onChange={(e) => handleChange("subject_acronym", e.target.value.toUpperCase())} maxLength={8} />
+            </div>
+
+            {/* Faculty */}
             <div>
               <label style={lbl}>Faculty</label>
               <Wrap><select style={sel} value={form.faculty} onChange={(e) => handleChange("faculty", e.target.value)}>
@@ -91,6 +119,8 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
                 {faculties.map((f) => <option key={f._id} value={f.name}>{f.name}{f.acronym ? ` [${f.acronym}]` : ""}</option>)}
               </select></Wrap>
             </div>
+
+            {/* Sub-Batch */}
             <div>
               <label style={lbl}>Sub-Batch</label>
               <Wrap><select style={sel} value={form.subBatch} onChange={(e) => handleChange("subBatch", e.target.value)}>
@@ -98,6 +128,8 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
                 {subBatchOptions.map((o) => <option key={o} value={o}>{o}</option>)}
               </select></Wrap>
             </div>
+
+            {/* Room */}
             <div style={{ gridColumn: "span 2" }}>
               <label style={lbl}>Room / Lab</label>
               <Wrap><select style={sel} value={form.room} onChange={(e) => handleChange("room", e.target.value)}>
@@ -105,6 +137,7 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
                 {rooms.map((r) => <option key={r._id} value={r.room_number}>{r.room_number}{r.building ? ` · ${r.building}` : ""}{r.capacity ? ` (cap: ${r.capacity})` : ""}</option>)}
               </select></Wrap>
             </div>
+
           </div>
 
           <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
