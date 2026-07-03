@@ -141,27 +141,31 @@ def construct_routes(db):
     # ════════════════════════════════════════════
     @api.route('/sync-sheets', methods=['POST'])
     def sync_sheets():
+        import time
         try:
-            # Step 1: wipe all 3 sheets
+        # Step 1: wipe all sheets
             http_requests.post(
-                APPS_SCRIPT_URL,
-                json={"action": "clear_all"},
-                timeout=15
+            APPS_SCRIPT_URL,
+            json={"action": "clear_all"},
+            timeout=30
             )
 
-            # Step 2: re-create every slot from MongoDB
+        # Wait for sheets to be deleted
+            time.sleep(3)
+
+        # Step 2: re-create every slot from MongoDB
             slots = list(db.slots.find())
             for slot in slots:
-                sheet_data = build_sheet_data(slot, db)  # ✅ pass db for room lookup
-                notify_sheets("create", sheet_data)
+             sheet_data = build_sheet_data(slot, db)
+             notify_sheets("create", sheet_data)
+             time.sleep(1)  # avoid Apps Script rate limiting
 
             return jsonify({
-                "message": f"Synced {len(slots)} slots successfully"
+            "message": f"Synced {len(slots)} slots successfully"
             }), 200
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
-
     @api.route('/batches/<batch_name>/schedule', methods=['GET'])
     def get_batch_schedule(batch_name):
         return timetable_controller.get_batch_schedule(db, batch_name)
