@@ -41,10 +41,7 @@ export default function SlotCell({ day, time, batch, year, slots = [], refresh }
 
             {/* Meta */}
             <div style={{ paddingLeft: 11, display: "flex", flexDirection: "column", gap: 1 }}>
-              {/* Full subject name in small text */}
-              <span style={{ fontSize: 8, color: "#94a3b8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {slot.subject}
-              </span>
+              
               {/* Section + SubBatch */}
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <span style={{ fontSize: 9, color: "#475569", fontWeight: 600 }}>{slot.batch}</span>

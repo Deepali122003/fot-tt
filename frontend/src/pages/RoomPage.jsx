@@ -133,7 +133,7 @@ export default function RoomPage() {
                                   borderRadius: 8, padding: "5px 7px", marginBottom: 3,
                                 }}>
                                   <div style={{ fontWeight: 700, color: "#1e293b", fontSize: 10, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                                    {s.subject} ({s.batch}{s.year ? ` Y${s.year}` : ""})
+                                    {s.subject_acronym || s.subject} ({s.batch}{s.year ? ` Y${s.year}` : ""})
                                   </div>
                                   <div style={{ fontSize: 9, color: "#0369a1", fontWeight: 600, marginTop: 1 }}>
                                     Sub: {s.subBatch || "ALL"}
