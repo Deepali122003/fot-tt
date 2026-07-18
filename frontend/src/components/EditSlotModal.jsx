@@ -1,16 +1,65 @@
 import BASE_URL from "../api";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+
+// ── Reusable Autocomplete Component ──
+function AutoComplete({ label, placeholder, value, onChange, items, filterFn, renderItem, getValue }) {
+  const [query, setQuery] = useState(value || "");
+  const [open, setOpen] = useState(false);
+  const ref = useRef();
+
+  useEffect(() => { setQuery(value || ""); }, [value]);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const filtered = query.trim() === "" ? items : items.filter(item => filterFn(item, query));
+
+  const inp = { width: "100%", border: "1px solid #e2e8f0", borderRadius: 12, padding: "9px 13px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", color: "#1e293b", background: "#f8fafc", outline: "none", boxSizing: "border-box" };
+  const lbl = { display: "block", fontSize: 10, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 5 };
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <label style={lbl}>{label}</label>
+      <input
+        style={inp}
+        placeholder={placeholder}
+        value={query}
+        onChange={(e) => { setQuery(e.target.value); onChange(""); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+      />
+      {open && filtered.length > 0 && (
+        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,.12)", zIndex: 999, maxHeight: 180, overflowY: "auto", marginTop: 4 }}>
+          {filtered.map((item, i) => (
+            <div key={i}
+              onMouseDown={(e) => { e.preventDefault(); const val = getValue(item); setQuery(val); onChange(val); setOpen(false); }}
+              style={{ padding: "9px 13px", fontSize: 12, cursor: "pointer", color: "#1e293b", borderBottom: "1px solid #f1f5f9" }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "#f8fafc"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "#fff"}
+            >
+              {renderItem(item)}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function EditSlotModal({ day, time, batch, year, slots = [], onClose, refresh }) {
   const [form, setForm] = useState({ subject: "", subject_acronym: "", faculty: "", room: "", subBatch: "" });
   const [loading, setLoading] = useState(false);
   const [faculties, setFaculties] = useState([]);
   const [rooms, setRooms] = useState([]);
+  const [subjects, setSubjects] = useState([]);
 
   useEffect(() => {
     fetch(`${BASE_URL}/api/faculties`).then(r => r.json()).then(d => setFaculties(Array.isArray(d) ? d : [])).catch(console.error);
     fetch(`${BASE_URL}/api/rooms`).then(r => r.json()).then(d => setRooms(Array.isArray(d) ? d : [])).catch(console.error);
+    fetch(`${BASE_URL}/api/subjects`).then(r => r.json()).then(d => setSubjects(Array.isArray(d) ? d : [])).catch(console.error);
   }, []);
 
   const batchPrefix = batch?.match(/[A-Za-z]+$/)?.[0]?.toUpperCase() || "A";
@@ -51,7 +100,6 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
   };
 
   const sel = { width: "100%", border: "1px solid #e2e8f0", borderRadius: 12, padding: "9px 13px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", color: "#1e293b", background: "#f8fafc", outline: "none", boxSizing: "border-box", appearance: "none", cursor: "pointer" };
-  const inp = { width: "100%", border: "1px solid #e2e8f0", borderRadius: 12, padding: "9px 13px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", color: "#1e293b", background: "#f8fafc", outline: "none", boxSizing: "border-box" };
   const lbl = { display: "block", fontSize: 10, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 5 };
   const Wrap = ({ children }) => <div style={{ position: "relative" }}>{children}<span style={{ position: "absolute", right: 13, top: "50%", transform: "translateY(-50%)", color: "#94a3b8", pointerEvents: "none", fontSize: 11 }}>▾</span></div>;
 
@@ -99,25 +147,57 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
 
-            {/* Subject Name */}
-            <div>
-              <label style={lbl}>Subject Name</label>
-              <input style={inp} placeholder="e.g. Data Structures" value={form.subject} onChange={(e) => handleChange("subject", e.target.value)} />
+            {/* Subject Autocomplete */}
+            <div style={{ gridColumn: "span 2" }}>
+              <AutoComplete
+                label="Subject *"
+                placeholder="Search by name or code…"
+                value={form.subject}
+                onChange={(val) => {
+                  const found = subjects.find(s => s.title === val);
+                  setForm(prev => ({
+                    ...prev,
+                    subject: val,
+                    subject_acronym: found ? found.code : prev.subject_acronym
+                  }));
+                }}
+                items={subjects}
+                filterFn={(item, q) =>
+                  item.title.toLowerCase().includes(q.toLowerCase()) ||
+                  item.code.toLowerCase().includes(q.toLowerCase())
+                }
+                renderItem={(item) => (
+                  <span><strong>[{item.code}]</strong> {item.title}</span>
+                )}
+                getValue={(item) => item.title}
+              />
             </div>
 
-            {/* Subject Acronym */}
+            {/* Subject Acronym (auto-filled, editable) */}
             <div>
-              <label style={lbl}>Subject Acronym *</label>
-              <input style={inp} placeholder="e.g. DS" value={form.subject_acronym} onChange={(e) => handleChange("subject_acronym", e.target.value.toUpperCase())} maxLength={8} />
+              <label style={lbl}>Subject Code *</label>
+              <input style={{ width: "100%", border: "1px solid #e2e8f0", borderRadius: 12, padding: "9px 13px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", color: "#1e293b", background: "#f8fafc", outline: "none", boxSizing: "border-box" }}
+                placeholder="e.g. DS" value={form.subject_acronym}
+                onChange={(e) => handleChange("subject_acronym", e.target.value.toUpperCase())} maxLength={8} />
             </div>
 
-            {/* Faculty */}
+            {/* Faculty Autocomplete */}
             <div>
-              <label style={lbl}>Faculty</label>
-              <Wrap><select style={sel} value={form.faculty} onChange={(e) => handleChange("faculty", e.target.value)}>
-                <option value="">— Select —</option>
-                {faculties.map((f) => <option key={f._id} value={f.name}>{f.name}{f.acronym ? ` [${f.acronym}]` : ""}</option>)}
-              </select></Wrap>
+              <AutoComplete
+                label="Faculty *"
+                placeholder="Search by name or acronym…"
+                value={form.faculty}
+                onChange={(val) => handleChange("faculty", val)}
+                items={faculties}
+                filterFn={(item, q) =>
+                  item.name.toLowerCase().includes(q.toLowerCase()) ||
+                  (item.acronym || "").toLowerCase().includes(q.toLowerCase())
+                }
+                renderItem={(item) => (
+                  <span><strong>{item.name}</strong>{item.acronym ? ` (${item.acronym})` : ""}</span>
+                )}
+                getValue={(item) => item.name}
+              />
             </div>
 
             {/* Sub-Batch */}

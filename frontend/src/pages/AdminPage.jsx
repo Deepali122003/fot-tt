@@ -21,23 +21,36 @@ const lbl = (text) => (
 
 export default function AdminPage() {
   const [tab, setTab] = useState("faculty");
+
   const [faculties, setFaculties] = useState([]);
   const [fForm, setFForm] = useState({ name: "", acronym: "", department: "", email: "" });
   const [fLoading, setFLoading] = useState(false);
+
   const [rooms, setRooms] = useState([]);
   const [rForm, setRForm] = useState({ room_number: "", capacity: "", building: "" });
   const [rLoading, setRLoading] = useState(false);
 
+  const [subjects, setSubjects] = useState([]);
+  const [sForm, setSForm] = useState({ code: "", title: "" });
+  const [sLoading, setSLoading] = useState(false);
+
   const fetchFaculties = async () => {
     const res = await fetch(`${BASE_URL}/api/faculties`);
-    setFaculties(await res.json());
+    const data = await res.json();
+    setFaculties(Array.isArray(data) ? data : []);
   };
   const fetchRooms = async () => {
     const res = await fetch(`${BASE_URL}/api/rooms`);
-    setRooms(await res.json());
+    const data = await res.json();
+    setRooms(Array.isArray(data) ? data : []);
+  };
+  const fetchSubjects = async () => {
+    const res = await fetch(`${BASE_URL}/api/subjects`);
+    const data = await res.json();
+    setSubjects(Array.isArray(data) ? data : []);
   };
 
-  useEffect(() => { fetchFaculties(); fetchRooms(); }, []);
+  useEffect(() => { fetchFaculties(); fetchRooms(); fetchSubjects(); }, []);
 
   const handleAddFaculty = async () => {
     if (!fForm.name.trim()) return alert("Faculty name is required");
@@ -76,6 +89,25 @@ export default function AdminPage() {
     fetchRooms();
   };
 
+  const handleAddSubject = async () => {
+    if (!sForm.title.trim()) return alert("Subject title is required");
+    if (!sForm.code.trim()) return alert("Subject code is required");
+    setSLoading(true);
+    await fetch(`${BASE_URL}/api/subjects`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(sForm),
+    });
+    setSForm({ code: "", title: "" });
+    fetchSubjects();
+    setSLoading(false);
+  };
+
+  const handleDeleteSubject = async (id) => {
+    if (!confirm("Delete this subject?")) return;
+    await fetch(`${BASE_URL}/api/subjects/${id}`, { method: "DELETE" });
+    fetchSubjects();
+  };
+
   const tabStyle = (t) => ({
     padding: "9px 22px", borderRadius: 10, border: "none", cursor: "pointer",
     fontWeight: 600, fontSize: 13, fontFamily: "'DM Sans', sans-serif",
@@ -87,44 +119,32 @@ export default function AdminPage() {
     <div style={{ padding: 24, fontFamily: "'DM Sans', sans-serif" }}>
       <div style={{ marginBottom: 24 }}>
         <h2 style={{ fontSize: 22, fontWeight: 700, color: "#1e293b", margin: 0 }}>Admin</h2>
-        <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>Manage faculties and rooms</p>
+        <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>Manage faculties, rooms and subjects</p>
       </div>
 
+      {/* Tabs */}
       <div style={{ display: "flex", gap: 4, background: "#f1f5f9", padding: 4, borderRadius: 14, width: "fit-content", marginBottom: 28 }}>
         <button style={tabStyle("faculty")} onClick={() => setTab("faculty")}>Faculty</button>
         <button style={tabStyle("room")} onClick={() => setTab("room")}>Rooms</button>
+        <button style={tabStyle("subject")} onClick={() => setTab("subject")}>Subjects</button>
       </div>
 
+      {/* ── FACULTY TAB ── */}
       {tab === "faculty" && (
         <>
           <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, padding: 24, marginBottom: 24, boxShadow: "0 1px 4px rgba(0,0,0,.05)" }}>
             <div style={{ fontSize: 10, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 16 }}>Add Faculty</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <div>
-                {lbl("Name *")}
-                <input style={inputStyle} placeholder="e.g. Dr. Sharma" value={fForm.name} onChange={(e) => setFForm({ ...fForm, name: e.target.value })} />
-              </div>
-              <div>
-                {lbl("Acronym *")}
-                <input style={inputStyle} placeholder="e.g. DS" value={fForm.acronym} onChange={(e) => setFForm({ ...fForm, acronym: e.target.value.toUpperCase() })} maxLength={5} />
-              </div>
-              <div>
-                {lbl("Department")}
-                <input style={inputStyle} placeholder="e.g. CSE" value={fForm.department} onChange={(e) => setFForm({ ...fForm, department: e.target.value })} />
-              </div>
-              <div>
-                {lbl("Email")}
-                <input style={inputStyle} placeholder="e.g. sharma@college.edu" value={fForm.email} onChange={(e) => setFForm({ ...fForm, email: e.target.value })} />
-              </div>
+              <div>{lbl("Name *")}<input style={inputStyle} placeholder="e.g. Dr. Sharma" value={fForm.name} onChange={(e) => setFForm({ ...fForm, name: e.target.value })} /></div>
+              <div>{lbl("Acronym *")}<input style={inputStyle} placeholder="e.g. DS" value={fForm.acronym} onChange={(e) => setFForm({ ...fForm, acronym: e.target.value.toUpperCase() })} maxLength={5} /></div>
+              <div>{lbl("Department")}<input style={inputStyle} placeholder="e.g. CSE" value={fForm.department} onChange={(e) => setFForm({ ...fForm, department: e.target.value })} /></div>
+              <div>{lbl("Email")}<input style={inputStyle} placeholder="e.g. sharma@college.edu" value={fForm.email} onChange={(e) => setFForm({ ...fForm, email: e.target.value })} /></div>
             </div>
-            <button style={btnPrimary} onClick={handleAddFaculty} disabled={fLoading}>
-              {fLoading ? "Adding…" : "Add Faculty"}
-            </button>
+            <button style={btnPrimary} onClick={handleAddFaculty} disabled={fLoading}>{fLoading ? "Adding…" : "Add Faculty"}</button>
           </div>
-
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {faculties.length === 0 && <p style={{ color: "#94a3b8", fontSize: 13 }}>No faculties yet.</p>}
-            {faculties.map((f) => (
+            {[...faculties].sort((a, b) => a.name.localeCompare(b.name)).map((f) => (
               <div key={f._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: "12px 16px" }}>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 14, color: "#1e293b", display: "flex", alignItems: "center", gap: 8 }}>
@@ -140,29 +160,18 @@ export default function AdminPage() {
         </>
       )}
 
+      {/* ── ROOM TAB ── */}
       {tab === "room" && (
         <>
           <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, padding: 24, marginBottom: 24, boxShadow: "0 1px 4px rgba(0,0,0,.05)" }}>
             <div style={{ fontSize: 10, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 16 }}>Add Room</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <div>
-                {lbl("Room Number *")}
-                <input style={inputStyle} placeholder="e.g. 213" value={rForm.room_number} onChange={(e) => setRForm({ ...rForm, room_number: e.target.value })} />
-              </div>
-              <div>
-                {lbl("Capacity")}
-                <input style={inputStyle} placeholder="e.g. 60" value={rForm.capacity} onChange={(e) => setRForm({ ...rForm, capacity: e.target.value })} />
-              </div>
-              <div style={{ gridColumn: "span 2" }}>
-                {lbl("Building")}
-                <input style={inputStyle} placeholder="e.g. Main Block" value={rForm.building} onChange={(e) => setRForm({ ...rForm, building: e.target.value })} />
-              </div>
+              <div>{lbl("Room Number *")}<input style={inputStyle} placeholder="e.g. 213" value={rForm.room_number} onChange={(e) => setRForm({ ...rForm, room_number: e.target.value })} /></div>
+              <div>{lbl("Capacity")}<input style={inputStyle} placeholder="e.g. 60" value={rForm.capacity} onChange={(e) => setRForm({ ...rForm, capacity: e.target.value })} /></div>
+              <div style={{ gridColumn: "span 2" }}>{lbl("Building")}<input style={inputStyle} placeholder="e.g. Main Block" value={rForm.building} onChange={(e) => setRForm({ ...rForm, building: e.target.value })} /></div>
             </div>
-            <button style={btnPrimary} onClick={handleAddRoom} disabled={rLoading}>
-              {rLoading ? "Adding…" : "Add Room"}
-            </button>
+            <button style={btnPrimary} onClick={handleAddRoom} disabled={rLoading}>{rLoading ? "Adding…" : "Add Room"}</button>
           </div>
-
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {rooms.length === 0 && <p style={{ color: "#94a3b8", fontSize: 13 }}>No rooms yet.</p>}
             {rooms.map((r) => (
@@ -172,6 +181,34 @@ export default function AdminPage() {
                   <div style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>Capacity: {r.capacity} · {r.building || "Main Block"}</div>
                 </div>
                 <button style={btnDelete} onClick={() => handleDeleteRoom(r._id)}>Delete</button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* ── SUBJECT TAB ── */}
+      {tab === "subject" && (
+        <>
+          <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, padding: 24, marginBottom: 24, boxShadow: "0 1px 4px rgba(0,0,0,.05)" }}>
+            <div style={{ fontSize: 10, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 16 }}>Add Subject</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div>{lbl("Code / Acronym *")}<input style={inputStyle} placeholder="e.g. DS" value={sForm.code} onChange={(e) => setSForm({ ...sForm, code: e.target.value.toUpperCase() })} maxLength={10} /></div>
+              <div>{lbl("Title *")}<input style={inputStyle} placeholder="e.g. Data Structures" value={sForm.title} onChange={(e) => setSForm({ ...sForm, title: e.target.value })} /></div>
+            </div>
+            <button style={btnPrimary} onClick={handleAddSubject} disabled={sLoading}>{sLoading ? "Adding…" : "Add Subject"}</button>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {subjects.length === 0 && <p style={{ color: "#94a3b8", fontSize: 13 }}>No subjects yet.</p>}
+            {subjects.map((s) => (
+              <div key={s._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: "12px 16px" }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: "#1e293b", display: "flex", alignItems: "center", gap: 8 }}>
+                    {s.title}
+                    <span style={{ fontSize: 10, fontWeight: 700, background: "#1e293b", color: "#fbbf24", padding: "2px 7px", borderRadius: 6 }}>[{s.code}]</span>
+                  </div>
+                </div>
+                <button style={btnDelete} onClick={() => handleDeleteSubject(s._id)}>Delete</button>
               </div>
             ))}
           </div>

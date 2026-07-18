@@ -33,8 +33,9 @@ class TimetableService:
         return {"id": str(result.inserted_id)}, 201
 
     def get_faculties(self):
-        return self.faculty_model.get_all_faculties()
-
+        faculties = self.faculty_model.get_all_faculties()
+        return sorted(faculties, key=lambda x: x.get("name", "").lower())
+    
     def create_room(self, data):
         result = self.room_model.add_room(
             data.get("room_number"),
@@ -49,6 +50,20 @@ class TimetableService:
     def get_labs(self):
         return self.lab_model.get_all_labs()
 
+    def create_subject(self, data):
+        if not data.get("title"):
+            return {"error": "Subject title is required"}, 400
+        result = self.subject_model.create_subject(data)
+        return {"id": str(result.inserted_id)}, 201
+
+    def get_subjects(self):
+        return self.subject_model.get_all_subjects()
+
+    def delete_subject(self, subject_id):
+        result = self.subject_model.delete_subject(subject_id)
+        if result.deleted_count == 0:
+            return {"error": "Subject not found"}, 404
+        return {"message": "Subject deleted"}, 200
     def process_new_slot(self, data):
         batch_name = (data.get("batch") or "").strip()
         faculty_name = (data.get("faculty") or "").strip()

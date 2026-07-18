@@ -94,6 +94,13 @@ def construct_routes(db):
     def delete_room(room_id):
         db.rooms.delete_one({"_id": ObjectId(room_id)})
         return jsonify({"message": "Deleted"}), 200
+    @api.route('/subjects', methods=['GET', 'POST'])
+    def subjects():
+        return timetable_controller.handle_subjects(db, request)
+
+    @api.route('/subjects/<subject_id>', methods=['DELETE'])
+    def delete_subject(subject_id):
+        return timetable_controller.delete_subject(db, subject_id)
     # ────────────────────────────────────────
     # SLOTS — GET ALL / POST NEW
     # ────────────────────────────────────────
