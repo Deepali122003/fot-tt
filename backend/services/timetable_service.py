@@ -93,6 +93,7 @@ class TimetableService:
             "faculty":          faculty["name"],
             "faculty_id":       str(faculty["_id"]),
             "faculty_acronym":  faculty.get("acronym", ""),
+            "faculty_department": faculty.get("department", ""),
             "room_id":          str(room["_id"]) if room else None,
             "room_number":      room_input if room_input else None,
             "batch":            batch["name"],
