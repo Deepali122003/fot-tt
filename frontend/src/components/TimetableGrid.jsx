@@ -30,14 +30,36 @@ export default function TimetableGrid({ batch, year, slots = [], refresh }) {
               <td style={{ padding: "10px 10px", borderRight: "1px solid #e2e8f0", borderBottom: "1px solid #e2e8f0", verticalAlign: "middle" }}>
                 <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 7, fontFamily: "'DM Mono', monospace", background: dayColors[day]?.bg, color: dayColors[day]?.color, display: "inline-block" }}>{day}</span>
               </td>
-              {times.map((time) => {
-                const cellSlots = slots.filter((s) => s.day === day && s.time === time && s.batch === batch);
-                return (
-                  <td key={time} style={{ borderRight: "1px solid #e2e8f0", borderBottom: "1px solid #e2e8f0", verticalAlign: "top", height: 105, padding: 0 }}>
-                    <SlotCell day={day} time={time} batch={batch} year={year} slots={cellSlots} refresh={refresh} />
-                  </td>
-                );
-              })}
+
+              {(() => {
+                const cells = [];
+                const skipped = new Set();
+
+                times.forEach((time) => {
+                  if (skipped.has(time)) return;
+
+                  const cellSlots = slots.filter(
+                    (s) => s.day === day && s.time === time && s.batch === batch
+                  );
+
+                  const twoHourSlot = cellSlots.find((s) => parseInt(s.duration) === 2);
+                  const colSpan = twoHourSlot ? 2 : 1;
+
+                  if (twoHourSlot) {
+                    const nextIdx = times.indexOf(time) + 1;
+                    if (nextIdx < times.length) skipped.add(times[nextIdx]);
+                  }
+
+                  cells.push(
+                    <td key={time} colSpan={colSpan}
+                      style={{ borderRight: "1px solid #e2e8f0", borderBottom: "1px solid #e2e8f0", verticalAlign: "top", height: 105, padding: 0 }}>
+                      <SlotCell day={day} time={time} batch={batch} year={year} slots={cellSlots} refresh={refresh} />
+                    </td>
+                  );
+                });
+
+                return cells;
+              })()}
             </tr>
           ))}
         </tbody>

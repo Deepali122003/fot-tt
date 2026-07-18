@@ -100,6 +100,7 @@ class TimetableService:
             "year":             batch.get("year", ""),
             "day":              data.get("day"),
             "time":             data.get("time"),
+            "duration":         int(data.get("duration", 1)),
         }
 
         result = self.slot_model.create_slot(slot_data)

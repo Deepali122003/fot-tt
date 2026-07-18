@@ -50,7 +50,7 @@ function AutoComplete({ label, placeholder, value, onChange, items, filterFn, re
 }
 
 export default function EditSlotModal({ day, time, batch, year, slots = [], onClose, refresh }) {
-  const [form, setForm] = useState({ subject: "", subject_acronym: "", faculty: "", room: "", subBatch: "" });
+  const [form, setForm] = useState({ subject: "", subject_acronym: "", faculty: "", room: "", subBatch: "" , duration : 1});
   const [loading, setLoading] = useState(false);
   const [faculties, setFaculties] = useState([]);
   const [rooms, setRooms] = useState([]);
@@ -76,6 +76,7 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
       faculty: form.faculty.trim(),
       room_id: form.room?.trim() || null,
       subBatch: form.subBatch?.trim() || null,
+      duration: form.duration,
       day, time, batch, year,
     };
     try {
@@ -86,7 +87,7 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
       });
       const data = await res.json();
       if (!res.ok) { alert(data.error || "Failed to add slot"); return; }
-      setForm({ subject: "", subject_acronym: "", faculty: "", room: "", subBatch: "" });
+      setForm({ subject: "", subject_acronym: "", faculty: "", room: "", subBatch: "" , duration : 1});
       refresh(); onClose();
     } catch { alert("Server error"); } finally { setLoading(false); }
   };
@@ -218,6 +219,19 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
               </select></Wrap>
             </div>
 
+            {/* Extend to next hour */}
+            <div style={{ gridColumn: "span 2", display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12 }}>
+              <input
+                type="checkbox"
+                id="extend"
+                checked={form.duration === 2}
+                onChange={(e) => handleChange("duration", e.target.checked ? 2 : 1)}
+                style={{ width: 16, height: 16, cursor: "pointer", accentColor: "#1e293b" }}
+              />
+              <label htmlFor="extend" style={{ fontSize: 13, fontWeight: 600, color: "#1e293b", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
+              Extend to next hour <span style={{ fontSize: 11, color: "#64748b", fontWeight: 400 }}>(2-hour slot)</span>
+              </label>
+            </div>
           </div>
 
           <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
