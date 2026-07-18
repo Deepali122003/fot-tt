@@ -103,6 +103,20 @@ def construct_routes(db):
     @api.route('/subjects/<subject_id>', methods=['DELETE'])
     def delete_subject(subject_id):
         return timetable_controller.delete_subject(db, subject_id)
+    
+    @api.route('/backfill-department', methods=['POST'])
+    def backfill_department():
+        slots = db.slots.find({})
+        updated = 0
+        for slot in slots:
+            faculty = db.faculties.find_one({"name": slot.get("faculty")})
+            if faculty and not slot.get("faculty_department"):
+                db.slots.update_one(
+                {"_id": slot["_id"]},
+                {"$set": {"faculty_department": faculty.get("department", "")}}
+            )
+                updated += 1
+        return jsonify({"message": f"Updated {updated} slots"}), 200
     # ────────────────────────────────────────
     # SLOTS — GET ALL / POST NEW
     # ────────────────────────────────────────
