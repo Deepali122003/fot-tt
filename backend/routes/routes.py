@@ -34,6 +34,7 @@ def build_sheet_data(slot, db=None):
     "room_number":     room_number if room_number else "-",
     "day":             slot.get("day", ""),
     "time":            slot.get("time", ""),
+    "duration":        slot.get("duration", 1),
 }
 
 
