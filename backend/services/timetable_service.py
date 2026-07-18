@@ -45,7 +45,8 @@ class TimetableService:
         return {"id": str(result.inserted_id)}, 201
 
     def get_rooms(self):
-        return self.room_model.get_available_rooms()
+        rooms = self.room_model.get_available_rooms()
+        return sorted(rooms, key=lambda x: x.get("room_number", ""))
 
     def get_labs(self):
         return self.lab_model.get_all_labs()

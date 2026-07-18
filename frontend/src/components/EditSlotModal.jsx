@@ -210,14 +210,25 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
               </select></Wrap>
             </div>
 
-            {/* Room */}
-            <div style={{ gridColumn: "span 2" }}>
-              <label style={lbl}>Room / Lab</label>
-              <Wrap><select style={sel} value={form.room} onChange={(e) => handleChange("room", e.target.value)}>
-                <option value="">— Select Room —</option>
-                {rooms.map((r) => <option key={r._id} value={r.room_number}>{r.room_number}{r.building ? ` · ${r.building}` : ""}{r.capacity ? ` (cap: ${r.capacity})` : ""}</option>)}
-              </select></Wrap>
-            </div>
+            
+            {/* Room Autocomplete */}
+              <div style={{ gridColumn: "span 2" }}>
+                <AutoComplete
+                  label="Room / Lab"
+                  placeholder="Search by room number or building…"
+                  value={form.room}
+                  onChange={(val) => handleChange("room", val)}
+                  items={rooms}
+                  filterFn={(item, q) =>
+                    item.room_number.toLowerCase().includes(q.toLowerCase()) ||
+                    (item.building || "").toLowerCase().includes(q.toLowerCase())
+                  }
+                  renderItem={(item) => (
+                    <span><strong>{item.room_number}</strong>{item.building ? ` · ${item.building}` : ""}{item.capacity ? ` (cap: ${item.capacity})` : ""}</span>
+                  )}
+                  getValue={(item) => item.room_number}
+                />
+              </div>
 
             {/* Extend to next hour */}
             <div style={{ gridColumn: "span 2", display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12 }}>
