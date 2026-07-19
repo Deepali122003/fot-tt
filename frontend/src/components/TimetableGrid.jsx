@@ -57,11 +57,11 @@ function SlotCard({ slot, refresh, onAdd }) {
     <div style={{ ...style.card, borderRadius: 8, padding: "5px 7px", boxShadow: "0 1px 2px rgba(0,0,0,.04)", fontFamily: "'DM Sans', sans-serif", height: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box", position: "relative" }}>
 
       {/* Small add button — always available, even when cell is filled */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onAdd(); }}
-        onMouseEnter={() => setHoverAdd(true)} onMouseLeave={() => setHoverAdd(false)}
-        title="Add another entry at this time"
-        style={{ position: "absolute", top: 4, right: 4, width: 16, height: 16, borderRadius: "50%", border: "none", background: hoverAdd ? "#1e293b" : "rgba(30,41,59,.15)", color: hoverAdd ? "#fff" : "#1e293b", fontSize: 11, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1, padding: 0, transition: "all .15s ease", zIndex: 2 }}>
+        <button
+          onClick={(e) => { e.stopPropagation(); onAdd(); }}
+          onMouseEnter={() => setHoverAdd(true)} onMouseLeave={() => setHoverAdd(false)}
+          title="Add another entry at this time"
+          style={{ position: "absolute", top: 4, right: 4, width: 18, height: 18, borderRadius: "50%", border: "1px solid #1e293b", background: hoverAdd ? "#1e293b" : "#ffffff", color: hoverAdd ? "#fff" : "#1e293b", fontSize: 12, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1, padding: 0, transition: "all .15s ease", zIndex: 2, boxShadow: "0 1px 3px rgba(0,0,0,.15)" }}>
         +
       </button>
 
