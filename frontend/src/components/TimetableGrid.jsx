@@ -37,7 +37,9 @@ function assignTracks(daySlots) {
   return tracks;
 }
 
-function SlotCard({ slot, refresh }) {
+function SlotCard({ slot, refresh, onAdd }) {
+  const [hoverAdd, setHoverAdd] = useState(false);
+
   const handleDelete = async (e) => {
     e.stopPropagation();
     try {
@@ -52,8 +54,18 @@ function SlotCard({ slot, refresh }) {
   const style = subBatchStyles[key];
 
   return (
-    <div style={{ ...style.card, borderRadius: 8, padding: "5px 7px", boxShadow: "0 1px 2px rgba(0,0,0,.04)", fontFamily: "'DM Sans', sans-serif", height: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
+    <div style={{ ...style.card, borderRadius: 8, padding: "5px 7px", boxShadow: "0 1px 2px rgba(0,0,0,.04)", fontFamily: "'DM Sans', sans-serif", height: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box", position: "relative" }}>
+
+      {/* Small add button — always available, even when cell is filled */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onAdd(); }}
+        onMouseEnter={() => setHoverAdd(true)} onMouseLeave={() => setHoverAdd(false)}
+        title="Add another entry at this time"
+        style={{ position: "absolute", top: 4, right: 4, width: 16, height: 16, borderRadius: "50%", border: "none", background: hoverAdd ? "#1e293b" : "rgba(30,41,59,.15)", color: hoverAdd ? "#fff" : "#1e293b", fontSize: 11, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1, padding: 0, transition: "all .15s ease", zIndex: 2 }}>
+        +
+      </button>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3, paddingRight: 18 }}>
         <span style={{ ...style.dot, width: 6, height: 6, borderRadius: "50%", flexShrink: 0 }} />
         <span style={{ fontSize: 11, fontWeight: 800, color: "#1e293b", fontFamily: "'DM Mono', monospace" }}>
           {slot.subject_acronym || slot.subject}
@@ -155,7 +167,7 @@ export default function TimetableGrid({ batch, year, slots = [], refresh }) {
                     const span = placed.endIdx - placed.startIdx;
                     return (
                       <div key={time} style={{ gridColumn: `${colIdx + 2} / span ${span}`, gridRow: trackIdx + 1, borderRight: "1px solid #e2e8f0", borderBottom: "1px solid #e2e8f0", minHeight: ROW_HEIGHT, padding: 4, boxSizing: "border-box" }}>
-                        <SlotCard slot={placed.slot} refresh={refresh} />
+                        <SlotCard slot={placed.slot} refresh={refresh} onAdd={() => setAddTarget({ day, time })} />
                       </div>
                     );
                   }
