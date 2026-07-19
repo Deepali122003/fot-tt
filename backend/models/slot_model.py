@@ -17,41 +17,29 @@ class SlotModel:
         return [times[i] for i in range(idx, min(idx + duration, len(times)))]
 
     def check_conflicts(self, slot_data, exclude_id=None):
-        occupied_times = self.get_occupied_times(slot_data)
-        
-        faculty_conflict = None
-        room_conflict = None
-        lab_conflict = None
+        occupied_times = set(self.get_occupied_times(slot_data))
 
-        for time in occupied_times:
-            base_query = {
-                "day": slot_data['day'],
-                "$or": [
-                    {"time": time},
-                    # also check if existing 2hr slot overlaps
-                    {"time": time, "duration": {"$gt": 1}}
-                ]
-            }
+        query_base = {"day": slot_data['day']}
+        if exclude_id:
+            if isinstance(exclude_id, str):
+                exclude_id = ObjectId(exclude_id)
+            query_base["_id"] = {"$ne": exclude_id}
 
-            if exclude_id:
-                if isinstance(exclude_id, str):
-                    exclude_id = ObjectId(exclude_id)
-                base_query["_id"] = {"$ne": exclude_id}
+        def find_conflict(field, value):
+            if not value:
+                return None
+            candidates = self.collection.find({**query_base, field: value})
+            for existing in candidates:
+                existing_times = set(self.get_occupied_times(existing))
+                if existing_times & occupied_times:
+                    return existing
+            return None
 
-            if slot_data.get("faculty") and not faculty_conflict:
-                query = {**base_query, "faculty": slot_data["faculty"]}
-                faculty_conflict = self.collection.find_one(query)
-
-            if slot_data.get("room_number") and not room_conflict:
-                query = {**base_query, "room_number": slot_data["room_number"]}
-                room_conflict = self.collection.find_one(query)
-
-            if slot_data.get("lab_name") and not lab_conflict:
-                query = {**base_query, "lab_name": slot_data["lab_name"]}
-                lab_conflict = self.collection.find_one(query)
+        faculty_conflict = find_conflict("faculty", slot_data.get("faculty"))
+        room_conflict = find_conflict("room_number", slot_data.get("room_number"))
+        lab_conflict = find_conflict("lab_name", slot_data.get("lab_name"))
 
         return faculty_conflict, room_conflict, lab_conflict
-
     def create_slot(self, slot_data):
         f_conf, r_conf, l_conf = self.check_conflicts(slot_data)
         if f_conf or r_conf or l_conf:

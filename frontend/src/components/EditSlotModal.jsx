@@ -230,18 +230,17 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
                 />
               </div>
 
-            {/* Extend to next hour */}
-            <div style={{ gridColumn: "span 2", display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12 }}>
-              <input
-                type="checkbox"
-                id="extend"
-                checked={form.duration === 2}
-                onChange={(e) => handleChange("duration", e.target.checked ? 2 : 1)}
-                style={{ width: 16, height: 16, cursor: "pointer", accentColor: "#1e293b" }}
-              />
-              <label htmlFor="extend" style={{ fontSize: 13, fontWeight: 600, color: "#1e293b", cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
-              Extend to next hour <span style={{ fontSize: 11, color: "#64748b", fontWeight: 400 }}>(2-hour slot)</span>
-              </label>
+            {/* Duration */}
+            <div style={{ gridColumn: "span 2" }}>
+              <label style={lbl}>Duration</label>
+              <Wrap>
+                <select style={sel} value={form.duration} onChange={(e) => handleChange("duration", parseInt(e.target.value))}>
+                  <option value={1}>1 hour</option>
+                  <option value={2}>2 hours</option>
+                  <option value={3}>3 hours</option>
+                  <option value={4}>4 hours</option>
+                </select>
+              </Wrap>
             </div>
           </div>
 
