@@ -50,7 +50,7 @@ function AutoComplete({ label, placeholder, value, onChange, items, filterFn, re
 }
 
 export default function EditSlotModal({ day, time, batch, year, slots = [], onClose, refresh }) {
-  const [form, setForm] = useState({ subject: "", subject_acronym: "", faculty: "", room: "", subBatch: "" , duration : 1});
+  const [form, setForm] = useState({ subject: "", subject_acronym: "", faculty: "", room: "", subBatch: "", duration: 1 });
   const [loading, setLoading] = useState(false);
   const [faculties, setFaculties] = useState([]);
   const [rooms, setRooms] = useState([]);
@@ -67,10 +67,29 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
 
   const handleChange = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
+  const submitSlot = async (newSlot) => {
+    const res = await fetch(`${BASE_URL}/api/slots`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newSlot),
+    });
+    const data = await res.json();
+    return { res, data };
+  };
+
+  const conflictMessage = (data) => {
+    const parts = [];
+    if (data.faculty_conflict) parts.push("Faculty is already booked");
+    if (data.room_conflict) parts.push("Room is already booked");
+    if (data.lab_conflict) parts.push("Lab is already booked");
+    if (data.batch_conflict) parts.push("This batch/sub-batch already has a class at this time");
+    return parts.length ? parts.join("\n") : "Conflict detected";
+  };
+
   const handleAdd = async () => {
     if (!form.subject.trim() || !form.faculty.trim()) return alert("Subject and Faculty are required");
     if (!form.subject_acronym.trim()) return alert("Subject Acronym is required");
-    const newSlot = {
+
+    const baseSlot = {
       subject: form.subject.trim(),
       subject_acronym: form.subject_acronym.trim().toUpperCase(),
       faculty: form.faculty.trim(),
@@ -79,15 +98,32 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
       duration: form.duration,
       day, time, batch, year,
     };
+
     try {
       setLoading(true);
-      const res = await fetch(`${BASE_URL}/api/slots`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newSlot),
-      });
-      const data = await res.json();
-      if (!res.ok) { alert(data.error || "Failed to add slot"); return; }
-      setForm({ subject: "", subject_acronym: "", faculty: "", room: "", subBatch: "" , duration : 1});
+      let { res, data } = await submitSlot(baseSlot);
+
+      if (!res.ok) {
+        if (data.error === "Conflict detected") {
+          const confirmForce = confirm(
+            `⚠️ Conflict detected:\n\n${conflictMessage(data)}\n\nDo you still want to add this slot anyway?`
+          );
+          if (confirmForce) {
+            const forced = await submitSlot({ ...baseSlot, force: true });
+            if (!forced.res.ok) {
+              alert(forced.data.error || "Failed to add slot");
+              return;
+            }
+          } else {
+            return;
+          }
+        } else {
+          alert(data.error || "Failed to add slot");
+          return;
+        }
+      }
+
+      setForm({ subject: "", subject_acronym: "", faculty: "", room: "", subBatch: "", duration: 1 });
       refresh(); onClose();
     } catch { alert("Server error"); } finally { setLoading(false); }
   };
@@ -101,6 +137,7 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
   };
 
   const sel = { width: "100%", border: "1px solid #e2e8f0", borderRadius: 12, padding: "9px 13px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", color: "#1e293b", background: "#f8fafc", outline: "none", boxSizing: "border-box", appearance: "none", cursor: "pointer" };
+  const inp = { width: "100%", border: "1px solid #e2e8f0", borderRadius: 12, padding: "9px 13px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", color: "#1e293b", background: "#f8fafc", outline: "none", boxSizing: "border-box" };
   const lbl = { display: "block", fontSize: 10, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 5 };
   const Wrap = ({ children }) => <div style={{ position: "relative" }}>{children}<span style={{ position: "absolute", right: 13, top: "50%", transform: "translateY(-50%)", color: "#94a3b8", pointerEvents: "none", fontSize: 11 }}>▾</span></div>;
 
@@ -177,7 +214,7 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
             {/* Subject Acronym (auto-filled, editable) */}
             <div>
               <label style={lbl}>Subject Code *</label>
-              <input style={{ width: "100%", border: "1px solid #e2e8f0", borderRadius: 12, padding: "9px 13px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", color: "#1e293b", background: "#f8fafc", outline: "none", boxSizing: "border-box" }}
+              <input style={inp}
                 placeholder="e.g. DS" value={form.subject_acronym}
                 onChange={(e) => handleChange("subject_acronym", e.target.value.toUpperCase())} maxLength={8} />
             </div>
@@ -201,34 +238,40 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
               />
             </div>
 
-            {/* Sub-Batch */}
-            <div>
-              <label style={lbl}>Sub-Batch</label>
-              <Wrap><select style={sel} value={form.subBatch} onChange={(e) => handleChange("subBatch", e.target.value)}>
-                <option value="">ALL</option>
-                {subBatchOptions.map((o) => <option key={o} value={o}>{o}</option>)}
-              </select></Wrap>
+            {/* Sub-Batch — free text with quick-pick suggestions */}
+            <div style={{ gridColumn: "span 2" }}>
+              <label style={lbl}>Sub-Batch <span style={{ fontWeight: 400, color: "#94a3b8", textTransform: "none" }}>(leave blank for ALL, or type a custom group)</span></label>
+              <input
+                style={inp}
+                list="subbatch-suggestions"
+                placeholder="e.g. A1, A2, or custom group name…"
+                value={form.subBatch}
+                onChange={(e) => handleChange("subBatch", e.target.value)}
+              />
+              <datalist id="subbatch-suggestions">
+                {subBatchOptions.map((o) => <option key={o} value={o} />)}
+                <option value="ALL" />
+              </datalist>
             </div>
 
-            
             {/* Room Autocomplete */}
-              <div style={{ gridColumn: "span 2" }}>
-                <AutoComplete
-                  label="Room / Lab"
-                  placeholder="Search by room number or building…"
-                  value={form.room}
-                  onChange={(val) => handleChange("room", val)}
-                  items={rooms}
-                  filterFn={(item, q) =>
-                    item.room_number.toLowerCase().includes(q.toLowerCase()) ||
-                    (item.building || "").toLowerCase().includes(q.toLowerCase())
-                  }
-                  renderItem={(item) => (
-                    <span><strong>{item.room_number}</strong>{item.building ? ` · ${item.building}` : ""}{item.capacity ? ` (cap: ${item.capacity})` : ""}</span>
-                  )}
-                  getValue={(item) => item.room_number}
-                />
-              </div>
+            <div style={{ gridColumn: "span 2" }}>
+              <AutoComplete
+                label="Room / Lab"
+                placeholder="Search by room number or building…"
+                value={form.room}
+                onChange={(val) => handleChange("room", val)}
+                items={rooms}
+                filterFn={(item, q) =>
+                  item.room_number.toLowerCase().includes(q.toLowerCase()) ||
+                  (item.building || "").toLowerCase().includes(q.toLowerCase())
+                }
+                renderItem={(item) => (
+                  <span><strong>{item.room_number}</strong>{item.building ? ` · ${item.building}` : ""}{item.capacity ? ` (cap: ${item.capacity})` : ""}</span>
+                )}
+                getValue={(item) => item.room_number}
+              />
+            </div>
 
             {/* Duration */}
             <div style={{ gridColumn: "span 2" }}>
@@ -242,6 +285,7 @@ export default function EditSlotModal({ day, time, batch, year, slots = [], onCl
                 </select>
               </Wrap>
             </div>
+
           </div>
 
           <div style={{ display: "flex", gap: 10, marginTop: 18 }}>

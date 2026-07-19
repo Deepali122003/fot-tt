@@ -69,6 +69,7 @@ class TimetableService:
         batch_name = (data.get("batch") or "").strip()
         faculty_name = (data.get("faculty") or "").strip()
         year = data.get("year")
+        force = bool(data.get("force", False))
 
         batch_query = {"name": {"$regex": f"^{batch_name}$", "$options": "i"}}
         if year:
@@ -105,12 +106,11 @@ class TimetableService:
             "duration":         int(data.get("duration", 1)),
         }
 
-        result = self.slot_model.create_slot(slot_data)
+        result = self.slot_model.create_slot(slot_data, force=force)
         if isinstance(result, dict) and "error" in result:
             return result, 409
 
         return {"message": "Slot added", "id": str(result.inserted_id), "slot": slot_data}, 201
-
     def delete_slot(self, slot_id):
         slot = self.db.slots.find_one({"_id": ObjectId(slot_id)})
         if not slot:
@@ -121,8 +121,9 @@ class TimetableService:
         return {"message": "Slot deleted successfully"}, 200
 
     def update_slot(self, slot_id, data):
+        force = bool(data.get("force", False))
         old_slot = self.db.slots.find_one({"_id": ObjectId(slot_id)})
-        result = self.slot_model.update_slot(slot_id, data)
+        result = self.slot_model.update_slot(slot_id, data, force=force)
         if isinstance(result, dict) and result.get("error"):
             return result, 409
         new_slot = self.db.slots.find_one({"_id": ObjectId(slot_id)})

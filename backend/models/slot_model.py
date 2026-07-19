@@ -7,7 +7,6 @@ class SlotModel:
     TIMES = ["8-9","9-10","10-11","11-12","12-1","1-2","2-3","3-4","4-5","5-6"]
 
     def get_occupied_times(self, slot_data):
-        """Returns list of times this slot occupies based on duration."""
         times = self.TIMES
         start = slot_data.get("time")
         duration = int(slot_data.get("duration", 1))
@@ -62,28 +61,33 @@ class SlotModel:
 
         return faculty_conflict, room_conflict, lab_conflict, batch_conflict
 
-    def create_slot(self, slot_data):
-        f_conf, r_conf, l_conf, b_conf = self.check_conflicts(slot_data)
-        if f_conf or r_conf or l_conf or b_conf:
-            return {
-                "error": "Conflict detected",
-                "faculty_conflict": bool(f_conf),
-                "room_conflict": bool(r_conf),
-                "lab_conflict": bool(l_conf),
-                "batch_conflict": bool(b_conf)
+    def _conflict_payload(self, f_conf, r_conf, l_conf, b_conf):
+        return {
+            "error": "Conflict detected",
+            "faculty_conflict": bool(f_conf),
+            "room_conflict": bool(r_conf),
+            "lab_conflict": bool(l_conf),
+            "batch_conflict": bool(b_conf),
+            "conflict_details": {
+                "faculty": f_conf.get("subject_acronym") or f_conf.get("subject") if f_conf else None,
+                "room": r_conf.get("subject_acronym") or r_conf.get("subject") if r_conf else None,
+                "lab": l_conf.get("subject_acronym") or l_conf.get("subject") if l_conf else None,
+                "batch": b_conf.get("subject_acronym") or b_conf.get("subject") if b_conf else None,
             }
+        }
+
+    def create_slot(self, slot_data, force=False):
+        if not force:
+            f_conf, r_conf, l_conf, b_conf = self.check_conflicts(slot_data)
+            if f_conf or r_conf or l_conf or b_conf:
+                return self._conflict_payload(f_conf, r_conf, l_conf, b_conf)
         return self.collection.insert_one(slot_data)
 
-    def update_slot(self, slot_id, slot_data):
-        f_conf, r_conf, l_conf, b_conf = self.check_conflicts(slot_data, exclude_id=slot_id)
-        if f_conf or r_conf or l_conf or b_conf:
-            return {
-                "error": "Conflict detected",
-                "faculty_conflict": bool(f_conf),
-                "room_conflict": bool(r_conf),
-                "lab_conflict": bool(l_conf),
-                "batch_conflict": bool(b_conf)
-            }
+    def update_slot(self, slot_id, slot_data, force=False):
+        if not force:
+            f_conf, r_conf, l_conf, b_conf = self.check_conflicts(slot_data, exclude_id=slot_id)
+            if f_conf or r_conf or l_conf or b_conf:
+                return self._conflict_payload(f_conf, r_conf, l_conf, b_conf)
         return self.collection.update_one(
             {"_id": ObjectId(slot_id)},
             {"$set": slot_data}
