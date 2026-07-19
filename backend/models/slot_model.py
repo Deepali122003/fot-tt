@@ -35,30 +35,54 @@ class SlotModel:
                     return existing
             return None
 
+        def subbatches_overlap(sub_a, sub_b):
+            a = (sub_a or "").strip().upper()
+            b = (sub_b or "").strip().upper()
+            if a in ("", "-", "ALL") or b in ("", "-", "ALL"):
+                return True
+            return a == b
+
+        def find_batch_conflict():
+            batch = slot_data.get("batch")
+            if not batch:
+                return None
+            candidates = self.collection.find({**query_base, "batch": batch})
+            for existing in candidates:
+                existing_times = set(self.get_occupied_times(existing))
+                if not (existing_times & occupied_times):
+                    continue
+                if subbatches_overlap(slot_data.get("subBatch"), existing.get("subBatch")):
+                    return existing
+            return None
+
         faculty_conflict = find_conflict("faculty", slot_data.get("faculty"))
         room_conflict = find_conflict("room_number", slot_data.get("room_number"))
         lab_conflict = find_conflict("lab_name", slot_data.get("lab_name"))
+        batch_conflict = find_batch_conflict()
 
-        return faculty_conflict, room_conflict, lab_conflict
+        return faculty_conflict, room_conflict, lab_conflict, batch_conflict
+
     def create_slot(self, slot_data):
-        f_conf, r_conf, l_conf = self.check_conflicts(slot_data)
-        if f_conf or r_conf or l_conf:
+        f_conf, r_conf, l_conf, b_conf = self.check_conflicts(slot_data)
+        if f_conf or r_conf or l_conf or b_conf:
             return {
                 "error": "Conflict detected",
                 "faculty_conflict": bool(f_conf),
                 "room_conflict": bool(r_conf),
-                "lab_conflict": bool(l_conf)
+                "lab_conflict": bool(l_conf),
+                "batch_conflict": bool(b_conf)
             }
         return self.collection.insert_one(slot_data)
 
     def update_slot(self, slot_id, slot_data):
-        f_conf, r_conf, l_conf = self.check_conflicts(slot_data, exclude_id=slot_id)
-        if f_conf or r_conf or l_conf:
+        f_conf, r_conf, l_conf, b_conf = self.check_conflicts(slot_data, exclude_id=slot_id)
+        if f_conf or r_conf or l_conf or b_conf:
             return {
                 "error": "Conflict detected",
                 "faculty_conflict": bool(f_conf),
                 "room_conflict": bool(r_conf),
-                "lab_conflict": bool(l_conf)
+                "lab_conflict": bool(l_conf),
+                "batch_conflict": bool(b_conf)
             }
         return self.collection.update_one(
             {"_id": ObjectId(slot_id)},
